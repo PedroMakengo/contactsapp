@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { Feather } from '@expo/vector-icons'
 
 import { styles } from './styles'
-import { Input } from '@/components/Input'
 import { theme } from '@/theme'
+
+import { Input } from '@/components/input'
+import { Contact } from '@/components/contact'
 
 export function Home() {
   const [name, setName] = useState('')
@@ -24,6 +26,12 @@ export function Home() {
           </TouchableOpacity>
         </Input>
       </View>
+      <Contact
+        contact={{
+          name: 'Pedro',
+          image: require('@/assets/pedromakengo.jpeg'),
+        }}
+      />
     </View>
   )
 }
