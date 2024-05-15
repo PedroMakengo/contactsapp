@@ -1,20 +1,22 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Home } from '@/app/home'
+import { Loading } from '@/components/loading'
 
+import {
+  useFonts,
+  Ubuntu_700Bold,
+  Ubuntu_500Medium,
+  Ubuntu_400Regular,
+} from '@expo-google-fonts/ubuntu'
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+  const [fontsLoaded] = useFonts({
+    Ubuntu_700Bold,
+    Ubuntu_500Medium,
+    Ubuntu_400Regular,
+  })
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  if (!fontsLoaded) {
+    return <Loading />
+  }
+
+  return <Home />
+}
