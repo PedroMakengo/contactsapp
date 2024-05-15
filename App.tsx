@@ -3,6 +3,8 @@ import { StatusBar } from 'react-native'
 import { Home } from '@/app/home'
 import { Loading } from '@/components/loading'
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+
 import {
   useFonts,
   Ubuntu_700Bold,
@@ -22,13 +24,13 @@ export default function App() {
   }
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
         translucent
       />
       <Home />
-    </>
+    </GestureHandlerRootView>
   )
 }

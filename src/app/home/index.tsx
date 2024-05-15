@@ -1,15 +1,81 @@
-import { View, TouchableOpacity } from 'react-native'
-import { useState } from 'react'
+import { View, TouchableOpacity, Alert, SectionList, Text } from 'react-native'
+import { useEffect, useState, useId, useRef } from 'react'
 import { Feather } from '@expo/vector-icons'
+import * as Contacts from 'expo-contacts'
 
 import { styles } from './styles'
 import { theme } from '@/theme'
 
 import { Input } from '@/components/input'
-import { Contact } from '@/components/contact'
+import { Button } from '@/components/button'
+import { Contact, ContactProps } from '@/components/contact'
+import BottomSheet from '@gorhom/bottom-sheet'
+import { Avatar } from '@/components/avatar'
 
+type SectionListDataProps = {
+  title: string
+  data: ContactProps[]
+}
 export function Home() {
+  const [contacts, setContacts] = useState<SectionListDataProps[]>([])
   const [name, setName] = useState('')
+  const [contact, setContact] = useState<Contacts.Contact>()
+
+  const bottomSheetRef = useRef<BottomSheet>(null)
+
+  // SELECIONAR OS MEUS CONTACTOS
+
+  const handleBottomSheetOpen = () => bottomSheetRef.current?.expand()
+  const handleBottomSheetClose = () => bottomSheetRef.current?.snapToIndex(0)
+
+  async function handleOpenDetails(id: string) {
+    const response = await Contacts.getContactByIdAsync(id)
+
+    setContact(response)
+    handleBottomSheetOpen()
+  }
+
+  async function fetchContacts() {
+    try {
+      const { status } = await Contacts.requestPermissionsAsync()
+      if (status === Contacts.PermissionStatus.GRANTED) {
+        const { data } = await Contacts.getContactsAsync({
+          name,
+        })
+        const list = data
+          .map((contact) => ({
+            id: contact.id ?? useId(),
+            name: contact.name,
+            image: contact.image,
+          }))
+          .reduce<SectionListDataProps[]>((acc: any, item) => {
+            const firstLetter = item.name[0].toUpperCase()
+
+            const existinggEntry = acc.find(
+              (entry: SectionListDataProps) => entry.title === firstLetter
+            )
+
+            if (existinggEntry) {
+              existinggEntry.data.push(item)
+            } else {
+              acc.push({ title: firstLetter, data: [item] })
+            }
+
+            return acc
+          }, [])
+
+        setContacts(list)
+        setContact(data[0])
+      }
+    } catch (error) {
+      console.log(error)
+      Alert.alert('Contatos', 'Não foi possível carregar os contatos.')
+    }
+  }
+
+  useEffect(() => {
+    fetchContacts()
+  }, [name])
 
   return (
     <View style={styles.container}>
@@ -26,12 +92,47 @@ export function Home() {
           </TouchableOpacity>
         </Input>
       </View>
-      <Contact
-        contact={{
-          name: 'Pedro',
-          image: require('@/assets/pedromakengo.jpeg'),
-        }}
+
+      <SectionList
+        sections={contacts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Contact contact={item} onPress={() => handleOpenDetails(item.id)} />
+        )}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.section}>{section.title}</Text>
+        )}
+        contentContainerStyle={styles.contentList}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+
+      {contact && (
+        <BottomSheet
+          ref={bottomSheetRef}
+          snapPoints={[0.01, 284]}
+          handleComponent={() => null}
+          backgroundStyle={styles.bottomSheet}
+        >
+          <Avatar
+            name={contact.name}
+            variant="large"
+            containerStyle={styles.image}
+          />
+          <View style={styles.bottomSheetContent}>
+            <Text style={styles.contactName}>{contact.name}</Text>
+            {contact.phoneNumbers && (
+              <View style={styles.phoneNumber}>
+                <Feather name="phone" size={18} color={theme.colors.gray_400} />
+                <Text style={styles.phone}>
+                  {contact.phoneNumbers[0].number}
+                </Text>
+              </View>
+            )}
+
+            <Button title="Fechar" onPress={handleBottomSheetClose} />
+          </View>
+        </BottomSheet>
+      )}
     </View>
   )
 }
